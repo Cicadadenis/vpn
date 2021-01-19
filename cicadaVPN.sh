@@ -1,15 +1,15 @@
 #!/bin/sh
 #  © Copyright Xack-Life-Cicada3301
 
-=====================================================
+# =====================================================
 
 VPN_IPSEC_PSK=$(LC_CTYPE=C tr -dc 'A-HJ-NPR-Za-km-z2-9' < /dev/urandom | head -c 20)
 echo ""
 echo ""
-echo -n "Введите Login для входа :"
+echo -n "Введите Login для Дальнейшего входа :"
 read YOUR_USERNAME
 echo ""
-echo -n "Введите Пароль для входа :"
+echo -n "Введите Пароль для Дальнейшего входа :"
 read YOUR_PASSWORD
 
 
