@@ -6,6 +6,7 @@
 VPN_IPSEC_PSK=$(LC_CTYPE=C tr -dc 'A-HJ-NPR-Za-km-z2-9' < /dev/urandom | head -c 20)
 echo ""
 echo ""
+echo "Установка скрипта CicadaVPN"
 echo -n "Введите Login для Дальнейшего входа :"
 read YOUR_USERNAME
 echo ""
