@@ -531,13 +531,14 @@ swan_ver_url="https://dl.ls20.com/v1/$os_type/$os_ver/swanver?arch=$os_arch&ver=
 swan_ver_latest=$(wget -t 3 -T 15 -qO- "$swan_ver_url")
 if printf '%s' "$swan_ver_latest" | grep -Eq '^([3-9]|[1-9][0-9])\.([0-9]|[1-9][0-9])$' \
   && [ "$SWAN_VER" != "$swan_ver_latest" ]; then
+
 cat <<EOF
 
 Note: A newer version of Libreswan ($swan_ver_latest) is available. To update, run:
   wget https://git.io/vpnupgrade -O vpnupgrade.sh
   sudo sh vpnupgrade.sh
 EOF
-if
+fi
 
 cat <<EOF
 
@@ -560,9 +561,6 @@ cat <<EOF
 EOF
 
 }
-
-echo -n "Нажмите Enter чтобы закрыть"
-read Den
 
 ## Defer setup until we have the complete script
 vpnsetup "$@"
