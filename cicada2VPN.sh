@@ -162,11 +162,11 @@ bigecho "Попытка автоматически определить IP эт�
 echo "====================================================="
 sleep 3
 cat <<'EOF'
-In case the script hangs here for more than a few minutes,
-press Ctrl-C to abort. Then edit it and manually enter IP.
+Если скрипт завис здесь больше нескольких минут,
+нажмите Ctrl-C для отмены. Затем отредактируйте его и вручную введите IP.
 EOF
 
-# In case auto IP discovery fails, enter server's public IP here.
+
 PUBLIC_IP=${VPN_PUBLIC_IP:-''}
 
 [ -z "$PUBLIC_IP" ] && PUBLIC_IP=$(dig @resolver1.opendns.com -t A -4 myip.opendns.com +short)
@@ -205,7 +205,7 @@ fi
 tar xzf "$swan_file" && /bin/rm -f "$swan_file"
 cd "libreswan-$SWAN_VER" || exit 1
 sed -i 's/ sysv )/ sysvinit )/' programs/setup/setup.in
-cat > Makefile.inc.local <<'EOF'
+#cat > Makefile.inc.local <<'EOF'
 WERROR_CFLAGS=-w
 USE_DNSSEC=false
 USE_DH2=true
@@ -213,7 +213,7 @@ USE_NSS_KDF=false
 FINALNSSDIR=/etc/ipsec.d
 EOF
 if ! grep -qs 'VERSION_CODENAME=' /etc/os-release; then
-cat >> Makefile.inc.local <<'EOF'
+#cat >> Makefile.inc.local <<'EOF'
 USE_DH31=false
 USE_NSS_AVA_COPY=true
 USE_NSS_IPSEC_PROFILE=false
@@ -253,7 +253,7 @@ DNS_SRVS="\"$DNS_SRV1 $DNS_SRV2\""
 
 
 conf_bk "/etc/ipsec.conf"
-cat > /etc/ipsec.conf <<EOF
+#cat > /etc/ipsec.conf <<EOF
 version 2.0
 
 config setup
