@@ -537,7 +537,7 @@ Note: A newer version of Libreswan ($swan_ver_latest) is available. To update, r
   wget https://git.io/vpnupgrade -O vpnupgrade.sh
   sudo sh vpnupgrade.sh
 EOF
-fi
+if
 
 cat <<EOF
 
@@ -558,6 +558,7 @@ cat <<EOF
 ================================================
 
 EOF
+fi
 
 echo -n "Нажмите Enter чтобы закрыть"
 read Den
