@@ -192,7 +192,7 @@ echo "====================================================="
 bigecho "Компиляция и установка Libreswan..."
 echo "====================================================="
 sleep 3
-
+@echo off
 SWAN_VER=4.1
 swan_file="libreswan-$SWAN_VER.tar.gz"
 swan_url1="https://github.com/libreswan/libreswan/archive/v$SWAN_VER.tar.gz"
@@ -204,7 +204,7 @@ fi
 tar xzf "$swan_file" && /bin/rm -f "$swan_file"
 cd "libreswan-$SWAN_VER" || exit 1
 sed -i 's/ sysv )/ sysvinit )/' programs/setup/setup.in
-#cat > Makefile.inc.local <<'EOF'
+cat > Makefile.inc.local <<'EOF'
 WERROR_CFLAGS=-w
 USE_DNSSEC=false
 USE_DH2=true
@@ -212,7 +212,7 @@ USE_NSS_KDF=false
 FINALNSSDIR=/etc/ipsec.d
 EOF
 if ! grep -qs 'VERSION_CODENAME=' /etc/os-release; then
-#cat >> Makefile.inc.local <<'EOF'
+cat >> Makefile.inc.local <<'EOF'
 USE_DH31=false
 USE_NSS_AVA_COPY=true
 USE_NSS_IPSEC_PROFILE=false
@@ -234,7 +234,7 @@ cd /opt/src || exit 1
 if ! /usr/local/sbin/ipsec --version 2>/dev/null | grep -qF "$SWAN_VER"; then
   exiterr "Libreswan $SWAN_VER failed to build."
 fi
-
+@echo on
 echo "====================================================="
 bigecho "Создание конфигурации VPN..."
 echo "====================================================="
@@ -504,7 +504,7 @@ echo "====================================================="
 bigecho "Запуск сервисов..."
 echo "====================================================="
 sleep 3
-
+clear 
 sysctl -e -q -p
 
 chmod +x /etc/rc.local
