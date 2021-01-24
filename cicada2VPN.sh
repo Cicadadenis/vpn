@@ -192,49 +192,8 @@ echo "====================================================="
 bigecho "Компиляция и установка Libreswan..."
 echo "====================================================="
 sleep 3
-@echo off
-SWAN_VER=4.1
-swan_file="libreswan-$SWAN_VER.tar.gz"
-swan_url1="https://github.com/libreswan/libreswan/archive/v$SWAN_VER.tar.gz"
-swan_url2="https://download.libreswan.org/$swan_file"
-if ! { wget -t 3 -T 30 -nv -O "$swan_file" "$swan_url1" || wget -t 3 -T 30 -nv -O "$swan_file" "$swan_url2"; }; then
-  exit 1
-fi
-/bin/rm -rf "/opt/src/libreswan-$SWAN_VER"
-tar xzf "$swan_file" && /bin/rm -f "$swan_file"
-cd "libreswan-$SWAN_VER" || exit 1
-sed -i 's/ sysv )/ sysvinit )/' programs/setup/setup.in
-cat > Makefile.inc.local <<'EOF'
-WERROR_CFLAGS=-w
-USE_DNSSEC=false
-USE_DH2=true
-USE_NSS_KDF=false
-FINALNSSDIR=/etc/ipsec.d
-EOF
-if ! grep -qs 'VERSION_CODENAME=' /etc/os-release; then
-cat >> Makefile.inc.local <<'EOF'
-USE_DH31=false
-USE_NSS_AVA_COPY=true
-USE_NSS_IPSEC_PROFILE=false
-USE_GLIBC_KERN_FLIP_HEADERS=true
-EOF
-fi
-if ! grep -qs IFLA_XFRM_LINK /usr/include/linux/if_link.h; then
-  echo "USE_XFRM_INTERFACE_IFLA_HEADER=true" >> Makefile.inc.local
-fi
-if [ "$(packaging/utils/lswan_detect.sh init)" = "systemd" ]; then
-  apt-get -yq install libsystemd-dev || exiterr2
-fi
-NPROCS=$(grep -c ^processor /proc/cpuinfo)
-[ -z "$NPROCS" ] && NPROCS=1
-make "-j$((NPROCS+1))" -s base && make -s install-base
 
-cd /opt/src || exit 1
-/bin/rm -rf "/opt/src/libreswan-$SWAN_VER"
-if ! /usr/local/sbin/ipsec --version 2>/dev/null | grep -qF "$SWAN_VER"; then
-  exiterr "Libreswan $SWAN_VER failed to build."
-fi
-@echo on
+
 echo "====================================================="
 bigecho "Создание конфигурации VPN..."
 echo "====================================================="
