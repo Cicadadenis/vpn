@@ -1,6 +1,7 @@
 #!/bin/sh
-echo "© Copyright Xack-Life-Cicada3301"
 echo "====================================================="
+echo "© Copyright Xack-Life-Cicada3301"
+
 
 VPN_IPSEC_PSK=$(LC_CTYPE=C tr -dc 'A-HJ-NPR-Za-km-z2-9' < /dev/urandom | head -c 20)
 echo ""
@@ -128,7 +129,7 @@ fi
 echo "====================================================="
 bigecho "Идет настройка VPN ... Подождите."
 echo "====================================================="
-
+sleep 3
 mkdir -p /opt/src
 cd /opt/src || exit 1
 
@@ -143,19 +144,23 @@ while fuser "$APT_LK" "$PKG_LK" >/dev/null 2>&1 \
   printf '%s' '.'
   sleep 3
 done
-
+echo "====================================================="
 bigecho "Заполнение кеша apt-get..."
-
+echo "====================================================="
+sleep 3
 export DEBIAN_FRONTEND=noninteractive
 apt-get -yq update || exiterr "'apt-get update 'не удалось."
-
+echo "====================================================="
 bigecho "Установка пакетов, необходимых для настройки..."
+echo "====================================================="
+sleep 3
 
 apt-get -yq install wget dnsutils openssl \
   iptables iproute2 gawk grep sed net-tools || exiterr2
-
+echo "====================================================="
 bigecho "Попытка автоматически определить IP этого сервера..."
-
+echo "====================================================="
+sleep 3
 cat <<'EOF'
 In case the script hangs here for more than a few minutes,
 press Ctrl-C to abort. Then edit it and manually enter IP.
@@ -168,21 +173,26 @@ PUBLIC_IP=${VPN_PUBLIC_IP:-''}
 
 check_ip "$PUBLIC_IP" || PUBLIC_IP=$(wget -t 3 -T 15 -qO- http://ipv4.icanhazip.com)
 check_ip "$PUBLIC_IP" || exiterr "Не удается определить общедоступный IP-адрес этого сервера. Отредактируйте сценарий и введите его вручную."
-
+echo "====================================================="
 bigecho "Установка пакетов, необходимых для VPN..."
+echo "====================================================="
+sleep 3
 
 apt-get -yq install libnss3-dev libnspr4-dev pkg-config \
   libpam0g-dev libcap-ng-dev libcap-ng-utils libselinux1-dev \
   libcurl4-nss-dev flex bison gcc make libnss3-tools \
   libevent-dev ppp xl2tpd || exiterr2
-
+echo "====================================================="
 bigecho "Установка Fail2Ban для защиты SSH..."
-# =====================================================
+echo "====================================================="
+sleep 3
 
 apt-get -yq install fail2ban || exiterr2
 
+echo "====================================================="
 bigecho "Компиляция и установка Libreswan..."
-# =====================================================
+echo "====================================================="
+sleep 3
 
 SWAN_VER=4.1
 swan_file="libreswan-$SWAN_VER.tar.gz"
@@ -226,9 +236,10 @@ if ! /usr/local/sbin/ipsec --version 2>/dev/null | grep -qF "$SWAN_VER"; then
   exiterr "Libreswan $SWAN_VER failed to build."
 fi
 
-# =====================================================
+echo "====================================================="
 bigecho "Создание конфигурации VPN..."
-# =====================================================
+echo "====================================================="
+sleep 3
 
 L2TP_NET=${VPN_L2TP_NET:-'192.168.42.0/24'}
 L2TP_LOCAL=${VPN_L2TP_LOCAL:-'192.168.42.1'}
@@ -356,14 +367,16 @@ VPN_PASSWORD_ENC=$(openssl passwd -1 "$VPN_PASSWORD")
 cat > /etc/ipsec.d/passwd <<EOF
 $VPN_USER:$VPN_PASSWORD_ENC:xauth-psk
 EOF
-
-bigecho "Updating sysctl settings..."
+echo "====================================================="
+bigecho "Обновление настроек sysctl..."
+echo "====================================================="
+sleep 3
 
 if ! grep -qs "hwdsl2 VPN script" /etc/sysctl.conf; then
   conf_bk "/etc/sysctl.conf"
 cat >> /etc/sysctl.conf <<EOF
 
-# Added by hwdsl2 VPN script
+
 kernel.msgmnb = 65536
 kernel.msgmax = 65536
 
@@ -383,8 +396,10 @@ net.ipv4.tcp_rmem = 10240 87380 12582912
 net.ipv4.tcp_wmem = 10240 87380 12582912
 EOF
 fi
-
+echo "====================================================="
 bigecho "Обновление правил IPTables..."
+echo "====================================================="
+sleep 3
 
 IPT_FILE=/etc/iptables.rules
 IPT_FILE2=/etc/iptables/rules.v4
@@ -408,9 +423,7 @@ if [ "$ipt_flag" = "1" ]; then
   iptables -I FORWARD 4 -i ppp+ -o ppp+ -s "$L2TP_NET" -d "$L2TP_NET" -j ACCEPT
   iptables -I FORWARD 5 -i "$NET_IFACE" -d "$XAUTH_NET" -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
   iptables -I FORWARD 6 -s "$XAUTH_NET" -o "$NET_IFACE" -j ACCEPT
-  # Uncomment to disallow traffic between VPN clients
-  # iptables -I FORWARD 2 -i ppp+ -o ppp+ -s "$L2TP_NET" -d "$L2TP_NET" -j DROP
-  # iptables -I FORWARD 3 -s "$XAUTH_NET" -d "$XAUTH_NET" -j DROP
+
   iptables -A FORWARD -j DROP
   iptables -t nat -I POSTROUTING -s "$XAUTH_NET" -o "$NET_IFACE" -m policy --dir out --pol none -j MASQUERADE
   iptables -t nat -I POSTROUTING -s "$L2TP_NET" -o "$NET_IFACE" -j MASQUERADE
@@ -422,8 +435,10 @@ if [ "$ipt_flag" = "1" ]; then
     /bin/cp -f "$IPT_FILE" "$IPT_FILE2"
   fi
 fi
-
+echo "====================================================="
 bigecho "Включение служб при загрузке..."
+echo "====================================================="
+sleep 3
 
 IPT_PST=/etc/init.d/iptables-persistent
 IPT_PST2=/usr/share/netfilter-persistent/plugins.d/15-ip4tables
@@ -479,7 +494,6 @@ if ! grep -qs "hwdsl2 VPN script" /etc/rc.local; then
   fi
 cat >> /etc/rc.local <<'EOF'
 
-# Added by hwdsl2 VPN script
 (sleep 15
 service ipsec restart
 service xl2tpd restart
@@ -487,8 +501,10 @@ echo 1 > /proc/sys/net/ipv4/ip_forward)&
 exit 0
 EOF
 fi
-
+echo "====================================================="
 bigecho "Запуск сервисов..."
+echo "====================================================="
+sleep 3
 
 sysctl -e -q -p
 
@@ -534,7 +550,7 @@ EOF
 
 }
 
-## Defer setup until we have the complete script
+
 vpnsetup "$@"
 
 exit 0
