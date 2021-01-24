@@ -4,14 +4,14 @@ echo "© Copyright Xack-Life-Cicada3301"
 
 
 VPN_IPSEC_PSK=$(LC_CTYPE=C tr -dc 'A-HJ-NPR-Za-km-z2-9' < /dev/urandom | head -c 20)
-echo ""
-echo ""
+
 echo "====================================================="
 echo "Установка скрипта CicadaVPN"
 echo "====================================================="
 echo ""
 echo "====================================================="
 echo -n "Введите Login для Дальнейшего входа :"
+echo ""
 read YOUR_USERNAME
 echo "====================================================="
 echo ""
