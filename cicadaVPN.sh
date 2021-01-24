@@ -560,6 +560,8 @@ cat <<EOF
 EOF
 
 }
+echo -n "Нажмите Enter чтобы закрыть"
+read Den
 
 ## Defer setup until we have the complete script
 vpnsetup "$@"
