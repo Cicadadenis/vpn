@@ -252,8 +252,8 @@ DNS_SRVS="\"$DNS_SRV1 $DNS_SRV2\""
 
 
 conf_bk "/etc/ipsec.conf"
-#cat > /etc/ipsec.conf <<EOF
-version 2.0
+cat > /etc/ipsec.conf <<EOF
+version 2.1 CicadaVPN
 
 config setup
   virtual-private=%v4:10.0.0.0/8,%v4:192.168.0.0/16,%v4:172.16.0.0/12,%v4:!$L2TP_NET,%v4:!$XAUTH_NET
