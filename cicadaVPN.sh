@@ -559,7 +559,6 @@ cat <<EOF
 
 EOF
 
-}
 echo -n "Нажмите Enter чтобы закрыть"
 read Den
 
