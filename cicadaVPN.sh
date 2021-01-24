@@ -7,8 +7,11 @@ VPN_IPSEC_PSK=$(LC_CTYPE=C tr -dc 'A-HJ-NPR-Za-km-z2-9' < /dev/urandom | head -c
 echo ""
 echo ""
 echo "Установка скрипта CicadaVPN"
+# =====================================================
+echo ""
 echo -n "Введите Login для Дальнейшего входа :"
 read YOUR_USERNAME
+# =====================================================
 echo ""
 echo -n "Введите Пароль для Дальнейшего входа :"
 read YOUR_PASSWORD
@@ -172,10 +175,12 @@ apt-get -yq install libnss3-dev libnspr4-dev pkg-config \
   libevent-dev ppp xl2tpd || exiterr2
 
 bigecho "Установка Fail2Ban для защиты SSH..."
+# =====================================================
 
 apt-get -yq install fail2ban || exiterr2
 
 bigecho "Компиляция и установка Libreswan..."
+# =====================================================
 
 SWAN_VER=4.1
 swan_file="libreswan-$SWAN_VER.tar.gz"
@@ -219,7 +224,9 @@ if ! /usr/local/sbin/ipsec --version 2>/dev/null | grep -qF "$SWAN_VER"; then
   exiterr "Libreswan $SWAN_VER failed to build."
 fi
 
+# =====================================================
 bigecho "Создание конфигурации VPN..."
+# =====================================================
 
 L2TP_NET=${VPN_L2TP_NET:-'192.168.42.0/24'}
 L2TP_LOCAL=${VPN_L2TP_LOCAL:-'192.168.42.1'}
@@ -507,7 +514,7 @@ cat <<EOF
 
 ================================================
 
-Сервер Cicada VPN теперь готов к использованию!
+Сервер CicadaVPN теперь готов к использованию!
 
 Подключитесь к своей новой VPN с этими данными:
 
@@ -518,7 +525,7 @@ cat <<EOF
 
 Запишите это. !
 
-
+© Copyright Xack-Life-Cicada3301
 ================================================
 
 EOF
