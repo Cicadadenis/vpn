@@ -1084,7 +1084,7 @@ cat <<EOF
 EOF
 }
 
-print_client_info()
+print_client_info() {
   if [ "$in_container" = "0" ]; then
 cat <<'EOF'
 Конфигурация клиента доступна по адресу:
