@@ -1,17 +1,17 @@
 #!/bin/bash
 #
-# Script to set up IKEv2 on Ubuntu, Debian, CentOS/RHEL and Amazon Linux 2
+# 
 #
-# The latest version of this script is available at:
-# https://github.com/hwdsl2/setup-ipsec-vpn
+# 
+# 
 #
-# Copyright (C) 2020-2021 Lin Song <linsongui@gmail.com>
+# C
 #
-# This work is licensed under the Creative Commons Attribution-ShareAlike 3.0
-# Unported License: http://creativecommons.org/licenses/by-sa/3.0/
 #
-# Attribution required: please include my name in any derivative and let me
-# know how you have improved it!
+#  http://creativecommons.org/licenses/by-sa/3.0/
+#
+# 
+# 
 
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
@@ -144,9 +144,22 @@ EOF
   exit 1
 }
 
+check_ikev2_exists() {
+  grep -qs "conn ikev2-cp" /etc/ipsec.conf || [ -f /etc/ipsec.d/ikev2.conf ]
+}
+
+check_client_name() {
+  ! { [ "${#client_name}" -gt "64" ] || printf '%s' "$client_name" | LC_ALL=C grep -q '[^A-Za-z0-9_-]\+' \
+    || case $client_name in -*) true;; *) false;; esac; }
+}
+
+check_client_cert_exists() {
+  certutil -L -d sql:/etc/ipsec.d -n "$client_name" >/dev/null 2>&1
+}
+
 check_arguments() {
   if [ "$use_defaults" = "1" ]; then
-    if grep -qs "conn ikev2-cp" /etc/ipsec.conf || [ -f /etc/ipsec.d/ikev2.conf ]; then
+    if check_ikev2_exists; then
       echo "Warning: Ignoring parameter '--auto'. Use '-h' for usage information." >&2
       echo >&2
     fi
@@ -155,39 +168,27 @@ check_arguments() {
     show_usage "Invalid parameters. Specify only one of '--addclient', '--exportclient' or '--listclients'."
   fi
   if [ "$add_client_using_defaults" = "1" ]; then
-    if ! grep -qs "conn ikev2-cp" /etc/ipsec.conf && [ ! -f /etc/ipsec.d/ikev2.conf ]; then
-      exiterr "You must first set up IKEv2 before adding a new client."
-    fi
-    if [ -z "$client_name" ] || [ "${#client_name}" -gt "64" ] \
-      || printf '%s' "$client_name" | LC_ALL=C grep -q '[^A-Za-z0-9_-]\+' \
-      || case $client_name in -*) true;; *) false;; esac; then
+    ! check_ikev2_exists && exiterr "You must first set up IKEv2 before adding a new client."
+    if [ -z "$client_name" ] || ! check_client_name; then
       exiterr "Invalid client name. Use one word only, no special characters except '-' and '_'."
-    elif certutil -L -d sql:/etc/ipsec.d -n "$client_name" >/dev/null 2>&1; then
+    elif check_client_cert_exists; then
       exiterr "Invalid client name. Client '$client_name' already exists."
     fi
   fi
   if [ "$export_client_using_defaults" = "1" ]; then
-    if ! grep -qs "conn ikev2-cp" /etc/ipsec.conf && [ ! -f /etc/ipsec.d/ikev2.conf ]; then
-      exiterr "You must first set up IKEv2 before exporting a client configuration."
-    fi
+    ! check_ikev2_exists && exiterr "You must first set up IKEv2 before exporting a client configuration."
     get_server_address
-    if [ -z "$client_name" ] || [ "${#client_name}" -gt "64" ] \
-      || printf '%s' "$client_name" | LC_ALL=C grep -q '[^A-Za-z0-9_-]\+' \
-      || [ "$client_name" = "IKEv2 VPN CA" ] || [ "$client_name" = "$server_addr" ] \
-      || case $client_name in -*) true;; *) false;; esac \
-      || ! certutil -L -d sql:/etc/ipsec.d -n "$client_name" >/dev/null 2>&1; then
+    if [ -z "$client_name" ] || ! check_client_name \
+      || [ "$client_name" = "Cicada VPN CA" ] || [ "$client_name" = "$server_addr" ] \
+      || ! check_client_cert_exists; then
       exiterr "Invalid client name, or client does not exist."
     fi
   fi
   if [ "$list_clients" = "1" ]; then
-    if ! grep -qs "conn ikev2-cp" /etc/ipsec.conf && [ ! -f /etc/ipsec.d/ikev2.conf ]; then
-      exiterr "You must first set up IKEv2 before listing clients."
-    fi
+    ! check_ikev2_exists && exiterr "You must first set up Cicada before listing clients."
   fi
   if [ "$remove_ikev2" = "1" ]; then
-    if ! grep -qs "conn ikev2-cp" /etc/ipsec.conf && [ ! -f /etc/ipsec.d/ikev2.conf ]; then
-      exiterr "Cannot remove IKEv2 because it has not been set up on this server."
-    fi
+    ! check_ikev2_exists && exiterr "Cannot remove Cicada because it has not been set up on this server."
     if [ "$((add_client_using_defaults + export_client_using_defaults + list_clients + use_defaults))" -gt 0 ]; then
       show_usage "Invalid parameters. '--removeikev2' cannot be specified with other parameters."
     fi
@@ -208,22 +209,14 @@ check_custom_dns() {
 }
 
 check_ca_cert_exists() {
-  if certutil -L -d sql:/etc/ipsec.d -n "IKEv2 VPN CA" >/dev/null 2>&1; then
-    exiterr "Certificate 'IKEv2 VPN CA' already exists."
+  if certutil -L -d sql:/etc/ipsec.d -n "Cicada VPN CA" >/dev/null 2>&1; then
+    exiterr "Certificate 'Cicada VPN CA' already exists."
   fi
 }
 
 check_server_cert_exists() {
   if certutil -L -d sql:/etc/ipsec.d -n "$server_addr" >/dev/null 2>&1; then
     echo "Error: Certificate '$server_addr' already exists." >&2
-    echo "Abort. No changes were made." >&2
-    exit 1
-  fi
-}
-
-check_client_cert_exists() {
-  if certutil -L -d sql:/etc/ipsec.d -n "$client_name" >/dev/null 2>&1; then
-    echo "Error: Client '$client_name' already exists." >&2
     echo "Abort. No changes were made." >&2
     exit 1
   fi
@@ -253,7 +246,7 @@ run_swan_update() {
   else
     echo "Error: Could not create temporary directory." >&2
   fi
-  read -n 1 -s -r -p "Press any key to continue IKEv2 setup..."
+  read -n 1 -s -r -p "Press any key to continue Cicada setup..."
   echo
 }
 
@@ -262,7 +255,7 @@ select_swan_update() {
     && [ "$swan_ver" != "$swan_ver_latest" ] \
     && printf '%s\n%s' "$swan_ver" "$swan_ver_latest" | sort -C -V; then
     echo "Note: A newer version of Libreswan ($swan_ver_latest) is available."
-    echo "      It is recommended to update Libreswan before setting up IKEv2."
+    echo "      It is recommended to update Libreswan before setting up Cicada."
     if [ "$in_container" = "0" ]; then
       echo
       printf "Do you want to update Libreswan? [Y/n] "
@@ -296,8 +289,8 @@ select_swan_update() {
 
 show_welcome_message() {
 cat <<'EOF'
-Welcome! Use this script to set up IKEv2 after setting up your own IPsec VPN server.
-Alternatively, you may manually set up IKEv2. See: https://git.io/ikev2
+Welcome! Use this script to set up Cicada after setting up your own IPsec VPN server.
+Alternatively, you may manually set up Cicada. See: https://git.io/ikev2
 
 I need to ask you a few questions before starting setup.
 You can use the default options and just press enter if you are OK with them.
@@ -306,15 +299,28 @@ EOF
 }
 
 show_start_message() {
-  bigecho "Starting IKEv2 setup in auto mode, using default options."
+  if [ -n "$VPN_DNS_NAME" ] || [ -n "$VPN_CLIENT_NAME" ] || [ -n "$VPN_DNS_SRV1" ]; then
+    bigecho "Starting Cicada setup in auto mode."
+    printf '%s' "## Using custom options: "
+    [ -n "$VPN_DNS_NAME" ] && printf '%s' "VPN_DNS_NAME "
+    [ -n "$VPN_CLIENT_NAME" ] && printf '%s' "VPN_CLIENT_NAME "
+    if [ -n "$VPN_DNS_SRV1" ] && [ -n "$VPN_DNS_SRV2" ]; then
+      printf '%s' "VPN_DNS_SRV1 VPN_DNS_SRV2"
+    elif [ -n "$VPN_DNS_SRV1" ]; then
+      printf '%s' "VPN_DNS_SRV1"
+    fi
+    echo
+  else
+    bigecho "Starting Cicada setup in auto mode, using default options."
+  fi
 }
 
 show_add_client_message() {
-  bigecho "Adding a new IKEv2 client '$client_name', using default options."
+  bigecho "Adding a new Cicada client '$client_name', using default options."
 }
 
 show_export_client_message() {
-  bigecho "Exporting existing IKEv2 client '$client_name', using default options."
+  bigecho "Exporting existing Cicada client '$client_name', using default options."
 }
 
 get_export_dir() {
@@ -346,12 +352,12 @@ get_server_address() {
 }
 
 list_existing_clients() {
-  echo "Checking for existing IKEv2 client(s)..."
-  certutil -L -d sql:/etc/ipsec.d | grep -v -e '^$' -e 'IKEv2 VPN CA' -e '\.' | tail -n +3 | cut -f1 -d ' '
+  echo "Checking for existing Cicada client(s)..."
+  certutil -L -d sql:/etc/ipsec.d | grep -v -e '^$' -e 'Cicada VPN CA' -e '\.' | tail -n +3 | cut -f1 -d ' '
 }
 
 enter_server_address() {
-  echo "Do you want IKEv2 VPN clients to connect to this server using a DNS name,"
+  echo "Do you want Cicada VPN clients to connect to this server using a DNS name,"
   printf "e.g. vpn.example.com, instead of its IP address? [y/N] "
   read -r response
   case $response in
@@ -387,16 +393,11 @@ enter_server_address() {
 
 enter_client_name() {
   echo
-  echo "Provide a name for the IKEv2 VPN client."
+  echo "Provide a name for the Cicada VPN client."
   echo "Use one word only, no special characters except '-' and '_'."
   read -rp "Client name: " client_name
-  while [ -z "$client_name" ] || [ "${#client_name}" -gt "64" ] \
-    || printf '%s' "$client_name" | LC_ALL=C grep -q '[^A-Za-z0-9_-]\+' \
-    || case $client_name in -*) true;; *) false;; esac \
-    || certutil -L -d sql:/etc/ipsec.d -n "$client_name" >/dev/null 2>&1; do
-    if [ -z "$client_name" ] || [ "${#client_name}" -gt "64" ] \
-      || printf '%s' "$client_name" | LC_ALL=C grep -q '[^A-Za-z0-9_-]\+' \
-      || case $client_name in -*) true;; *) false;; esac; then
+  while [ -z "$client_name" ] || ! check_client_name || check_client_cert_exists; do
+    if [ -z "$client_name" ] || ! check_client_name; then
       echo "Invalid client name."
     else
       echo "Invalid client name. Client '$client_name' already exists."
@@ -407,17 +408,12 @@ enter_client_name() {
 
 enter_client_name_with_defaults() {
   echo
-  echo "Provide a name for the IKEv2 VPN client."
+  echo "Provide a name for the Cicada VPN client."
   echo "Use one word only, no special characters except '-' and '_'."
   read -rp "Client name: [vpnclient] " client_name
   [ -z "$client_name" ] && client_name=vpnclient
-  while [ "${#client_name}" -gt "64" ] \
-    || printf '%s' "$client_name" | LC_ALL=C grep -q '[^A-Za-z0-9_-]\+' \
-    || case $client_name in -*) true;; *) false;; esac \
-    || certutil -L -d sql:/etc/ipsec.d -n "$client_name" >/dev/null 2>&1; do
-      if [ "${#client_name}" -gt "64" ] \
-        || printf '%s' "$client_name" | LC_ALL=C grep -q '[^A-Za-z0-9_-]\+' \
-        || case $client_name in -*) true;; *) false;; esac; then
+  while ! check_client_name || check_client_cert_exists; do
+      if ! check_client_name; then
         echo "Invalid client name."
       else
         echo "Invalid client name. Client '$client_name' already exists."
@@ -432,14 +428,12 @@ enter_client_name_for_export() {
   list_existing_clients
   get_server_address
   echo
-  read -rp "Enter the name of the IKEv2 client to export: " client_name
-  while [ -z "$client_name" ] || [ "${#client_name}" -gt "64" ] \
-    || printf '%s' "$client_name" | LC_ALL=C grep -q '[^A-Za-z0-9_-]\+' \
-    || [ "$client_name" = "IKEv2 VPN CA" ] || [ "$client_name" = "$server_addr" ] \
-    || case $client_name in -*) true;; *) false;; esac \
-    || ! certutil -L -d sql:/etc/ipsec.d -n "$client_name" >/dev/null 2>&1; do
+  read -rp "Enter the name of the Cicada client to export: " client_name
+  while [ -z "$client_name" ] || ! check_client_name \
+    || [ "$client_name" = "Cicada VPN CA" ] || [ "$client_name" = "$server_addr" ] \
+    || ! check_client_cert_exists; do
     echo "Invalid client name, or client does not exist."
-    read -rp "Enter the name of the IKEv2 client to export: " client_name
+    read -rp "Enter the name of the Cicada client to export: " client_name
   done
 }
 
@@ -460,7 +454,7 @@ enter_client_cert_validity() {
 enter_custom_dns() {
   echo
   echo "By default, clients are set to use Google Public DNS when the VPN is active."
-  printf "Do you want to specify custom DNS servers for IKEv2? [y/N] "
+  printf "Do you want to specify custom DNS servers for Cicada? [y/N] "
   read -r response
   case $response in
     [yY][eE][sS]|[yY])
@@ -541,7 +535,7 @@ select_mobike() {
   mobike_enable=0
   if [ "$mobike_support" = "1" ]; then
     echo
-    echo "The MOBIKE IKEv2 extension allows VPN clients to change network attachment points,"
+    echo "The MOBIKE Cicada extension allows VPN clients to change network attachment points,"
     echo "e.g. switch between mobile data and Wi-Fi and keep the IPsec tunnel up on the new IP."
     echo
     printf "Do you want to enable MOBIKE support? [Y/n] "
@@ -582,13 +576,13 @@ EOF
 }
 
 select_menu_option() {
-  echo "IKEv2 is already set up on this server."
+  echo "Cicada is already set up on this server."
   echo
   echo "Select an option:"
   echo "  1) Add a new client"
   echo "  2) Export configuration for an existing client"
   echo "  3) List existing clients"
-  echo "  4) Remove IKEv2"
+  echo "  4) Remove Cicada"
   echo "  5) Exit"
   read -rp "Option: " selected_option
   until [[ "$selected_option" =~ ^[1-5]$ ]]; do
@@ -599,7 +593,7 @@ select_menu_option() {
 
 confirm_setup_options() {
 cat <<EOF
-We are ready to set up IKEv2 now. Below are the setup options you selected.
+We are ready to set up Cicada now. Below are the setup options you selected.
 Please double check before continuing!
 
 ======================================
@@ -651,8 +645,8 @@ create_client_cert() {
   sleep $((RANDOM % 3 + 1))
 
   certutil -z <(head -c 1024 /dev/urandom) \
-    -S -c "IKEv2 VPN CA" -n "$client_name" \
-    -s "O=IKEv2 VPN,CN=$client_name" \
+    -S -c "Cicada VPN CA" -n "$client_name" \
+    -s "O=Cicada VPN,CN=$client_name" \
     -k rsa -v "$client_validity" \
     -d sql:/etc/ipsec.d -t ",," \
     --keyUsage digitalSignature,keyEncipherment \
@@ -718,8 +712,8 @@ create_mobileconfig() {
   p12_base64=$(base64 -w 52 "$export_dir$client_name.p12")
   [ -z "$p12_base64" ] && exiterr "Could not encode .p12 file."
 
-  ca_base64=$(certutil -L -d sql:/etc/ipsec.d -n "IKEv2 VPN CA" -a | grep -v CERTIFICATE)
-  [ -z "$ca_base64" ] && exiterr "Could not encode IKEv2 VPN CA certificate."
+  ca_base64=$(certutil -L -d sql:/etc/ipsec.d -n "Cicada VPN CA" -a | grep -v CERTIFICATE)
+  [ -z "$ca_base64" ] && exiterr "Could not encode Cicada VPN CA certificate."
 
   uuid1=$(uuidgen)
   [ -z "$uuid1" ] && exiterr "Could not generate UUID value."
@@ -857,7 +851,7 @@ $ca_base64
     </dict>
   </array>
   <key>PayloadDisplayName</key>
-  <string>IKEv2 VPN ($server_addr)</string>
+  <string>Cicada VPN ($server_addr)</string>
   <key>PayloadIdentifier</key>
   <string>com.apple.vpn.managed.$(uuidgen)</string>
   <key>PayloadRemovalDisallowed</key>
@@ -892,7 +886,7 @@ create_android_profile() {
 cat > "$sswan_file" <<EOF
 {
   "uuid": "$uuid2",
-  "name": "IKEv2 VPN ($server_addr)",
+  "name": "Cicada VPN ($server_addr)",
   "type": "ikev2-cert",
   "remote": {
     "addr": "$server_addr"
@@ -929,8 +923,8 @@ ANSWERS
 
   if [ "$use_dns_name" = "1" ]; then
     certutil -z <(head -c 1024 /dev/urandom) \
-      -S -c "IKEv2 VPN CA" -n "$server_addr" \
-      -s "O=IKEv2 VPN,CN=$server_addr" \
+      -S -c "Cicada VPN CA" -n "$server_addr" \
+      -s "O=Cicada VPN,CN=$server_addr" \
       -k rsa -v 120 \
       -d sql:/etc/ipsec.d -t ",," \
       --keyUsage digitalSignature,keyEncipherment \
@@ -938,8 +932,8 @@ ANSWERS
       --extSAN "dns:$server_addr" >/dev/null 2>&1 || exiterr "Failed to create server certificate."
   else
     certutil -z <(head -c 1024 /dev/urandom) \
-      -S -c "IKEv2 VPN CA" -n "$server_addr" \
-      -s "O=IKEv2 VPN,CN=$server_addr" \
+      -S -c "Cicada VPN CA" -n "$server_addr" \
+      -s "O=Cicada VPN,CN=$server_addr" \
       -k rsa -v 120 \
       -d sql:/etc/ipsec.d -t ",," \
       --keyUsage digitalSignature,keyEncipherment \
@@ -949,7 +943,7 @@ ANSWERS
 }
 
 add_ikev2_connection() {
-  bigecho2 "Adding a new IKEv2 connection..."
+  bigecho2 "Adding a new Cicada connection..."
 
   if ! grep -qs '^include /etc/ipsec\.d/\*\.conf$' /etc/ipsec.conf; then
     echo >> /etc/ipsec.conf
@@ -1050,7 +1044,7 @@ cat <<EOF
 
 ================================================
 
-New IKEv2 VPN client "$client_name" added!
+New Cicada VPN client "$client_name" added!
 
 VPN server address: $server_addr
 VPN client name: $client_name
@@ -1064,7 +1058,7 @@ cat <<EOF
 
 ================================================
 
-IKEv2 VPN client "$client_name" exported!
+Cicada VPN client "$client_name" exported!
 
 VPN server address: $server_addr
 VPN client name: $client_name
@@ -1095,7 +1089,7 @@ cat <<EOF
 
 ================================================
 
-IKEv2 setup successful. Details for IKEv2 mode:
+Cicada setup successful. Details for Cicada mode:
 
 VPN server address: $server_addr
 VPN client name: $client_name
@@ -1133,7 +1127,7 @@ EOF
 
 cat <<'EOF'
 
-Next steps: Configure IKEv2 VPN clients. See:
+Next steps: Configure Cicada VPN clients. See:
 https://git.io/ikev2clients
 
 ================================================
@@ -1143,9 +1137,9 @@ EOF
 
 check_ipsec_conf() {
   if grep -qs "conn ikev2-cp" /etc/ipsec.conf; then
-    echo "Error: IKEv2 configuration section found in /etc/ipsec.conf." >&2
-    echo "       This script cannot automatically remove IKEv2 from this server." >&2
-    echo "       To manually remove IKEv2, see https://git.io/ikev2" >&2
+    echo "Error: Cicada configuration section found in /etc/ipsec.conf." >&2
+    echo "       This script cannot automatically remove Cicada from this server." >&2
+    echo "       To manually remove Cicada, see https://git.io/ikev2" >&2
     echo "Abort. No changes were made." >&2
     exit 1
   fi
@@ -1153,12 +1147,12 @@ check_ipsec_conf() {
 
 confirm_remove_ikev2() {
   echo
-  echo "WARNING: This option will remove IKEv2 from this VPN server, but keep the IPsec/L2TP"
-  echo "         and IPsec/XAuth (\"Cisco IPsec\") modes, if installed. All IKEv2 configuration"
+  echo "WARNING: This option will remove Cicada from this VPN server, but keep the IPsec/L2TP"
+  echo "         and IPsec/XAuth (\"Cisco IPsec\") modes, if installed. All Cicada configuration"
   echo "         including certificates and keys will be permanently deleted."
   echo "         This *cannot* be undone! "
   echo
-  printf "Are you sure you want to remove IKEv2? [y/N] "
+  printf "Are you sure you want to remove Cicada? [y/N] "
   read -r response
   case $response in
     [yY][eE][sS]|[yY])
@@ -1179,17 +1173,17 @@ delete_ikev2_conf() {
 delete_certificates() {
   echo
   bigecho "Deleting certificates and keys from the IPsec database..."
-  certutil -L -d sql:/etc/ipsec.d | grep -v -e '^$' -e 'IKEv2 VPN CA' | tail -n +3 | cut -f1 -d ' ' | while read -r line; do
+  certutil -L -d sql:/etc/ipsec.d | grep -v -e '^$' -e 'Cicada VPN CA' | tail -n +3 | cut -f1 -d ' ' | while read -r line; do
     certutil -F -d sql:/etc/ipsec.d -n "$line"
     certutil -D -d sql:/etc/ipsec.d -n "$line" 2>/dev/null
   done
-  certutil -F -d sql:/etc/ipsec.d -n "IKEv2 VPN CA"
-  certutil -D -d sql:/etc/ipsec.d -n "IKEv2 VPN CA" 2>/dev/null
+  certutil -F -d sql:/etc/ipsec.d -n "Cicada VPN CA"
+  certutil -D -d sql:/etc/ipsec.d -n "Cicada VPN CA" 2>/dev/null
 }
 
 print_ikev2_removed_message() {
   echo
-  echo "IKEv2 removed!"
+  echo "Cicada removed!"
 }
 
 ikev2setup() {
@@ -1283,7 +1277,7 @@ ikev2setup() {
     exit 0
   fi
 
-  if grep -qs "conn ikev2-cp" /etc/ipsec.conf || [ -f /etc/ipsec.d/ikev2.conf ]; then
+  if check_ikev2_exists; then
     select_menu_option
     case $selected_option in
       1)
@@ -1348,6 +1342,14 @@ ikev2setup() {
   else
     check_server_dns_name
     check_custom_dns
+    if [ -n "$VPN_CLIENT_NAME" ]; then
+      client_name="$VPN_CLIENT_NAME"
+      check_client_name || exiterr "Invalid client name. Use one word only, no special characters except '-' and '_'."
+    else
+      client_name=vpnclient
+    fi
+    check_client_cert_exists && exiterr "Client '$client_name' already exists."
+    client_validity=120
     show_start_message
     if [ -n "$VPN_DNS_NAME" ]; then
       use_dns_name=1
@@ -1359,9 +1361,6 @@ ikev2setup() {
       server_addr="$public_ip"
     fi
     check_server_cert_exists
-    client_name=vpnclient
-    check_client_cert_exists
-    client_validity=120
     if [ -n "$VPN_DNS_SRV1" ] && [ -n "$VPN_DNS_SRV2" ]; then
       dns_server_1="$VPN_DNS_SRV1"
       dns_server_2="$VPN_DNS_SRV2"
