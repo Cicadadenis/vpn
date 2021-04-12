@@ -1,17 +1,5 @@
 #!/bin/bash
 #
-# Script to set up IKEv2 on Ubuntu, Debian, CentOS/RHEL and Amazon Linux 2
-#
-# The latest version of this script is available at:
-# https://github.com/hwdsl2/setup-ipsec-vpn
-#
-# Copyright (C) 2020-2021 Lin Song <linsongui@gmail.com>
-#
-# This work is licensed under the Creative Commons Attribution-ShareAlike 3.0
-# Unported License: http://creativecommons.org/licenses/by-sa/3.0/
-#
-# Attribution required: please include my name in any derivative and let me
-# know how you have improved it!
 
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
@@ -782,7 +770,8 @@ cat > "$mc_file" <<EOF
         <key>RemoteAddress</key>
         <string>$server_addr</string>
         <key>RemoteIdentifier</key>
-        <string>$server_addr</string>
+       # <string>$server_addr</string>
+        <string>CicadaVPN</string>
         <key>UseConfigurationAttributeInternalIPSubnet</key>
         <integer>0</integer>
       </dict>
