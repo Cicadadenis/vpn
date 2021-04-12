@@ -751,7 +751,7 @@ cat > "$mc_file" <<EOF
         <key>RemoteAddress</key>
         <string>$server_addr</string>
         <key>RemoteIdentifier</key>
-        <string>$server_addr</string>
+        <string>Cicada VPN</string>
         <key>UseConfigurationAttributeInternalIPSubnet</key>
         <integer>0</integer>
       </dict>
