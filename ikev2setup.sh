@@ -770,8 +770,8 @@ cat > "$mc_file" <<EOF
         <key>RemoteAddress</key>
         <string>$server_addr</string>
         <key>RemoteIdentifier</key>
-       # <string>$server_addr</string>
-        <string>CicadaVPN</string>
+        <string>$server_addr</string>
+       # <string>CicadaVPN</string>
         <key>UseConfigurationAttributeInternalIPSubnet</key>
         <integer>0</integer>
       </dict>
@@ -783,7 +783,7 @@ cat > "$mc_file" <<EOF
       <key>PayloadDescription</key>
       <string>Configures VPN settings</string>
       <key>PayloadDisplayName</key>
-      <string>VPN</string>
+      <string>Cicada VPN</string>
       <key>PayloadIdentifier</key>
       <string>com.apple.vpn.managed.$(uuidgen)</string>
       <key>PayloadType</key>
@@ -846,7 +846,7 @@ $ca_base64
     </dict>
   </array>
   <key>PayloadDisplayName</key>
-  <string>IKEv2 VPN ($server_addr)</string>
+  <string>Cicada VPN</string>
   <key>PayloadIdentifier</key>
   <string>com.apple.vpn.managed.$(uuidgen)</string>
   <key>PayloadRemovalDisallowed</key>
