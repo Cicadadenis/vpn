@@ -736,9 +736,9 @@ cat > "$mc_file" <<EOF
           <integer>1410</integer>
         </dict>
         <key>LocalIdentifier</key>
-        <string>ViPvpn</string>
+        <string>$client_name</string>
         <key>PayloadCertificateUUID</key>
-        <string>c48246df-ce6a-46f7-b25a-289956fedce8</string>
+        <string>$uuid1</string>
         <key>OnDemandEnabled</key>
         <integer>0</integer>
         <key>OnDemandRules</key>
@@ -749,9 +749,9 @@ cat > "$mc_file" <<EOF
           </dict>
         </array>
         <key>RemoteAddress</key>
-        <string>194.67.87.160</string>
+        <string>$server_addr</string>
         <key>RemoteIdentifier</key>
-        <string>CicadaVPN</string>
+        <string>Cicada VPN</string>
         <key>UseConfigurationAttributeInternalIPSubnet</key>
         <integer>0</integer>
       </dict>
@@ -765,11 +765,11 @@ cat > "$mc_file" <<EOF
       <key>PayloadDisplayName</key>
       <string>VPN</string>
       <key>PayloadIdentifier</key>
-      <string>com.apple.vpn.managed.900797f8-4b11-45fb-8b5d-21fcd708d809</string>
+      <string>com.apple.vpn.managed.$(uuidgen)</string>
       <key>PayloadType</key>
       <string>com.apple.vpn.managed</string>
       <key>PayloadUUID</key>
-      <string>b3c033ee-6a56-4f12-9d54-f1ac7a2f4418</string>
+      <string>$(uuidgen)</string>
       <key>PayloadVersion</key>
       <integer>1</integer>
       <key>Proxies</key>
@@ -786,128 +786,28 @@ cat > "$mc_file" <<EOF
     </dict>
     <dict>
       <key>PayloadCertificateFileName</key>
-      <string>ViPvpn</string>
+      <string>$client_name</string>
       <key>PayloadContent</key>
       <data>
-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
-8QIDCSfAAAA=
+$p12_base64
       </data>
       <key>PayloadDescription</key>
       <string>Adds a PKCS#12-formatted certificate</string>
       <key>PayloadDisplayName</key>
-      <string>ViPvpn</string>
+      <string>$client_name</string>
       <key>PayloadIdentifier</key>
-      <string>com.apple.security.pkcs12.76d9edf8-2589-4976-89ab-5bfa64c1d3a3</string>
+      <string>com.apple.security.pkcs12.$(uuidgen)</string>
       <key>PayloadType</key>
       <string>com.apple.security.pkcs12</string>
       <key>PayloadUUID</key>
-      <string>c48246df-ce6a-46f7-b25a-289956fedce8</string>
+      <string>$uuid1</string>
       <key>PayloadVersion</key>
       <integer>1</integer>
     </dict>
     <dict>
       <key>PayloadContent</key>
       <data>
-MIIC5TCCAc2gAwIBAgIFALf18aUwDQYJKoZIhvcNAQELBQAwKzEVMBMGA1UEAxMM
-SUtFdjIgVlBOIENBMRIwEAYDVQQKEwlJS0V2MiBWUE4wHhcNMjEwNDExMTAwNjMy
-WhcNMzEwNDExMTAwNjMyWjArMRUwEwYDVQQDEwxJS0V2MiBWUE4gQ0ExEjAQBgNV
-BAoTCUlLRXYyIFZQTjCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKyr
-pRTd5kB4z9KoPqPaSNUCyboOgdp/KSMauxe/ckjY/d1lWSoLO6f5L+/Hc3AN9MQz
-eyw9Z9xdTA39N83QfMh9o+lY022iG5lJ7UEuRbnb+wD+cMHP5XHzD5IF58AzaNK/
-WonoQLHcBT8fj5He9R58vHkqjrSF6P9XaVp6ZjBSdjeukAsLqwcKvfK+aNI+2Awe
-mdEEUygXJXp5f2MArqGPxkAJDhq5IyjHM8j1kHzOUBujsokMdO4IglzXvuOOANeM
-SNZjOlpH/ADG6h2Gd+IIsB4Qaoao6oio93ickGvJ/yBZbysicynCjcwcBp0OJSu6
-oOsv7XuQZ0S5Ugde5rsCAwEAAaMQMA4wDAYDVR0TBAUwAwEB/zANBgkqhkiG9w0B
-AQsFAAOCAQEAMPb9Ec9EUsT40w/mq6dPEPpfsTzJQ+GZToE+qVMMMFDefK25c79Q
-u068gIhi6mh/wiUx5CwfZMzEUB6Vo/IOPva3T0tBP5HUU3ay2VfQzTbrjrd1gXhT
-uQs49H/vpxlP/mr7doReJkfM8Pn04A/WPXk100n0ri9z1peIR6S88mZpLth9qrnJ
-IqO8gZtfSpINjocbJH0ff1SifXzmSLoCoAsFSjkE91sOi3Yx8tPSyyVF4M8Negza
-v6wnnMQGTcrwhOrpbqNbTKcxIv3u5e1GE8ff/iceZaS4H9U8i+kIL+cagEIwb98W
-A0dYky4DlsanGFzOm0NWrxAHHONr2JwH6w==
+$ca_base64
       </data>
       <key>PayloadCertificateFileName</key>
       <string>ikev2vpnca</string>
@@ -916,25 +816,25 @@ A0dYky4DlsanGFzOm0NWrxAHHONr2JwH6w==
       <key>PayloadDisplayName</key>
       <string>Certificate Authority (CA)</string>
       <key>PayloadIdentifier</key>
-      <string>com.apple.security.root.4b0180fd-fa03-4cf0-83c8-558abcbe4a32</string>
+      <string>com.apple.security.root.$(uuidgen)</string>
       <key>PayloadType</key>
       <string>com.apple.security.root</string>
       <key>PayloadUUID</key>
-      <string>8e088c37-47b9-4809-80d9-2457fa8bacc7</string>
+      <string>$(uuidgen)</string>
       <key>PayloadVersion</key>
       <integer>1</integer>
     </dict>
   </array>
   <key>PayloadDisplayName</key>
-  <string>Cicada (VPN)</string>
+  <string>Cicada VPN</string>
   <key>PayloadIdentifier</key>
-  <string>com.apple.vpn.managed.79ae551d-aa3a-48cd-ace4-0c9479552271</string>
+  <string>com.apple.vpn.managed.$(uuidgen)</string>
   <key>PayloadRemovalDisallowed</key>
   <false/>
   <key>PayloadType</key>
   <string>Configuration</string>
   <key>PayloadUUID</key>
-  <string>97b0f2d5-6588-4575-b48d-3196cbbe9b08</string>
+  <string>$(uuidgen)</string>
   <key>PayloadVersion</key>
   <integer>1</integer>
 </dict>
