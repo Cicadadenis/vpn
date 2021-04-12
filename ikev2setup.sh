@@ -1,5 +1,5 @@
 #!/bin/bash
-#
+# 2
 # 
 #
 # 
@@ -87,7 +87,7 @@ check_swan_install() {
   if ( ! grep -qs "hwdsl2 VPN script" /etc/sysctl.conf && ! grep -qs "hwdsl2" /opt/src/run.sh ) \
     || ! printf '%s' "$ipsec_ver" | grep -q "Libreswan"; then
 cat 1>&2 <<'EOF'
-Error: Your must first set up the IPsec VPN server before setting up IKEv2.
+Error: Your must first set up the IPsec VPN server before setting up Cicada.
        See: https://github.com/hwdsl2/setup-ipsec-vpn
 EOF
     exit 1
@@ -132,20 +132,20 @@ cat 1>&2 <<EOF
 Usage: bash $0 [options]
 
 Options:
-  --auto                        run IKEv2 setup in auto mode using default options (for initial IKEv2 setup only)
-  --addclient [client name]     add a new IKEv2 client using default options (after IKEv2 setup)
-  --exportclient [client name]  export an existing IKEv2 client using default options (after IKEv2 setup)
-  --listclients                 list the names of existing IKEv2 clients (after IKEv2 setup)
-  --removeikev2                 remove IKEv2 and delete all certificates and keys from the IPsec database
+  --auto                        run Cicada setup in auto mode using default options (for initial Cicada setup only)
+  --addclient [client name]     add a new Cicada client using default options (after Cicada setup)
+  --exportclient [client name]  export an existing Cicada client using default options (after Cicada setup)
+  --listclients                 list the names of existing Cicada clients (after Cicada setup)
+  --removecicada                 remove Cicada and delete all certificates and keys from the IPsec database
   -h, --help                    show this help message and exit
 
-To customize IKEv2 or client options, run this script without arguments.
+To customize Cicada or client options, run this script without arguments.
 EOF
   exit 1
 }
 
-check_ikev2_exists() {
-  grep -qs "conn ikev2-cp" /etc/ipsec.conf || [ -f /etc/ipsec.d/ikev2.conf ]
+check_cicada_exists() {
+  grep -qs "conn cicada-cp" /etc/ipsec.conf || [ -f /etc/ipsec.d/cicada.conf ]
 }
 
 check_client_name() {
@@ -159,7 +159,7 @@ check_client_cert_exists() {
 
 check_arguments() {
   if [ "$use_defaults" = "1" ]; then
-    if check_ikev2_exists; then
+    if check_cicada_exists; then
       echo "Warning: Ignoring parameter '--auto'. Use '-h' for usage information." >&2
       echo >&2
     fi
@@ -168,7 +168,7 @@ check_arguments() {
     show_usage "Invalid parameters. Specify only one of '--addclient', '--exportclient' or '--listclients'."
   fi
   if [ "$add_client_using_defaults" = "1" ]; then
-    ! check_ikev2_exists && exiterr "You must first set up IKEv2 before adding a new client."
+    ! check_cicada_exists && exiterr "You must first set up Cicada before adding a new client."
     if [ -z "$client_name" ] || ! check_client_name; then
       exiterr "Invalid client name. Use one word only, no special characters except '-' and '_'."
     elif check_client_cert_exists; then
@@ -176,7 +176,7 @@ check_arguments() {
     fi
   fi
   if [ "$export_client_using_defaults" = "1" ]; then
-    ! check_ikev2_exists && exiterr "You must first set up IKEv2 before exporting a client configuration."
+    ! check_cicada_exists && exiterr "You must first set up Cicada before exporting a client configuration."
     get_server_address
     if [ -z "$client_name" ] || ! check_client_name \
       || [ "$client_name" = "Cicada VPN CA" ] || [ "$client_name" = "$server_addr" ] \
@@ -185,12 +185,12 @@ check_arguments() {
     fi
   fi
   if [ "$list_clients" = "1" ]; then
-    ! check_ikev2_exists && exiterr "You must first set up Cicada before listing clients."
+    ! check_cicada_exists && exiterr "You must first set up Cicada before listing clients."
   fi
-  if [ "$remove_ikev2" = "1" ]; then
-    ! check_ikev2_exists && exiterr "Cannot remove Cicada because it has not been set up on this server."
+  if [ "$remove_cicada" = "1" ]; then
+    ! check_cicada_exists && exiterr "Cannot remove Cicada because it has not been set up on this server."
     if [ "$((add_client_using_defaults + export_client_using_defaults + list_clients + use_defaults))" -gt 0 ]; then
-      show_usage "Invalid parameters. '--removeikev2' cannot be specified with other parameters."
+      show_usage "Invalid parameters. '--removecicada' cannot be specified with other parameters."
     fi
   fi
 }
@@ -224,9 +224,9 @@ check_server_cert_exists() {
 
 check_swan_ver() {
   if [ "$in_container" = "0" ]; then
-    swan_ver_url="https://dl.ls20.com/v1/$os_type/$os_ver/swanverikev2?arch=$os_arch&ver=$swan_ver&auto=$use_defaults"
+    swan_ver_url="https://dl.ls20.com/v1/$os_type/$os_ver/swanvercicada?arch=$os_arch&ver=$swan_ver&auto=$use_defaults"
   else
-    swan_ver_url="https://dl.ls20.com/v1/docker/$os_arch/swanverikev2?ver=$swan_ver&auto=$use_defaults"
+    swan_ver_url="https://dl.ls20.com/v1/docker/$os_arch/swanvercicada?ver=$swan_ver&auto=$use_defaults"
   fi
   swan_ver_latest=$(wget -t 3 -T 15 -qO- "$swan_ver_url")
 }
@@ -290,7 +290,7 @@ select_swan_update() {
 show_welcome_message() {
 cat <<'EOF'
 Welcome! Use this script to set up Cicada after setting up your own IPsec VPN server.
-Alternatively, you may manually set up Cicada. See: https://git.io/ikev2
+Alternatively, you may manually set up Cicada. See: https://git.io/cicada
 
 I need to ask you a few questions before starting setup.
 You can use the default options and just press enter if you are OK with them.
@@ -346,7 +346,7 @@ get_server_ip() {
 }
 
 get_server_address() {
-  server_addr=$(grep -s "leftcert=" /etc/ipsec.d/ikev2.conf | cut -f2 -d=)
+  server_addr=$(grep -s "leftcert=" /etc/ipsec.d/cicada.conf | cut -f2 -d=)
   [ -z "$server_addr" ] && server_addr=$(grep -s "leftcert=" /etc/ipsec.conf | cut -f2 -d=)
   check_ip "$server_addr" || check_dns_name "$server_addr" || exiterr "Could not get VPN server address."
 }
@@ -728,7 +728,7 @@ cat > "$mc_file" <<EOF
   <key>PayloadContent</key>
   <array>
     <dict>
-      <key>IKEv2</key>
+      <key>Cicada</key>
       <dict>
         <key>AuthenticationMethod</key>
         <string>Certificate</string>
@@ -807,7 +807,7 @@ cat > "$mc_file" <<EOF
       <key>UserDefinedName</key>
       <string>$server_addr</string>
       <key>VPNType</key>
-      <string>IKEv2</string>
+      <string>Cicada</string>
     </dict>
     <dict>
       <key>PayloadCertificateFileName</key>
@@ -835,7 +835,7 @@ $p12_base64
 $ca_base64
       </data>
       <key>PayloadCertificateFileName</key>
-      <string>ikev2vpnca</string>
+      <string>cicadavpnca</string>
       <key>PayloadDescription</key>
       <string>Adds a CA root certificate</string>
       <key>PayloadDisplayName</key>
@@ -887,7 +887,7 @@ cat > "$sswan_file" <<EOF
 {
   "uuid": "$uuid2",
   "name": "Cicada VPN ($server_addr)",
-  "type": "ikev2-cert",
+  "type": "cicada-cert",
   "remote": {
     "addr": "$server_addr"
   },
@@ -910,8 +910,8 @@ create_ca_server_certs() {
   bigecho2 "Generating CA and server certificates..."
 
   certutil -z <(head -c 1024 /dev/urandom) \
-    -S -x -n "IKEv2 VPN CA" \
-    -s "O=IKEv2 VPN,CN=IKEv2 VPN CA" \
+    -S -x -n "Cicada VPN CA" \
+    -s "O=Cicada VPN,CN=Cicada VPN CA" \
     -k rsa -v 120 \
     -d sql:/etc/ipsec.d -t "CT,," -2 >/dev/null 2>&1 <<ANSWERS || exiterr "Failed to create CA certificate."
 y
@@ -942,7 +942,7 @@ ANSWERS
   fi
 }
 
-add_ikev2_connection() {
+add_cicada_connection() {
   bigecho2 "Adding a new Cicada connection..."
 
   if ! grep -qs '^include /etc/ipsec\.d/\*\.conf$' /etc/ipsec.conf; then
@@ -950,9 +950,9 @@ add_ikev2_connection() {
     echo 'include /etc/ipsec.d/*.conf' >> /etc/ipsec.conf
   fi
 
-cat > /etc/ipsec.d/ikev2.conf <<EOF
+cat > /etc/ipsec.d/cicada.conf <<EOF
 
-conn ikev2-cp
+conn cicada-cp
   left=%defaultroute
   leftcert=$server_addr
   leftsendcert=always
@@ -968,7 +968,7 @@ conn ikev2-cp
   dpdtimeout=120
   dpdaction=clear
   auto=add
-  ikev2=insist
+  cicada=insist
   rekey=no
   pfs=no
   fragmentation=yes
@@ -980,29 +980,29 @@ conn ikev2-cp
 EOF
 
   if [ "$use_dns_name" = "1" ]; then
-cat >> /etc/ipsec.d/ikev2.conf <<EOF
+cat >> /etc/ipsec.d/cicada.conf <<EOF
   leftid=@$server_addr
 EOF
   else
-cat >> /etc/ipsec.d/ikev2.conf <<EOF
+cat >> /etc/ipsec.d/cicada.conf <<EOF
   leftid=$server_addr
 EOF
   fi
 
   if [ -n "$dns_server_2" ]; then
-cat >> /etc/ipsec.d/ikev2.conf <<EOF
+cat >> /etc/ipsec.d/cicada.conf <<EOF
   modecfgdns="$dns_servers"
 EOF
   else
-cat >> /etc/ipsec.d/ikev2.conf <<EOF
+cat >> /etc/ipsec.d/cicada.conf <<EOF
   modecfgdns=$dns_server_1
 EOF
   fi
 
   if [ "$mobike_enable" = "1" ]; then
-    echo "  mobike=yes" >> /etc/ipsec.d/ikev2.conf
+    echo "  mobike=yes" >> /etc/ipsec.d/cicada.conf
   else
-    echo "  mobike=no" >> /etc/ipsec.d/ikev2.conf
+    echo "  mobike=no" >> /etc/ipsec.d/cicada.conf
   fi
 }
 
@@ -1128,7 +1128,7 @@ EOF
 cat <<'EOF'
 
 Next steps: Configure Cicada VPN clients. See:
-https://git.io/ikev2clients
+https://git.io/cicadaclients
 
 ================================================
 
@@ -1136,16 +1136,16 @@ EOF
 }
 
 check_ipsec_conf() {
-  if grep -qs "conn ikev2-cp" /etc/ipsec.conf; then
+  if grep -qs "conn cicada-cp" /etc/ipsec.conf; then
     echo "Error: Cicada configuration section found in /etc/ipsec.conf." >&2
     echo "       This script cannot automatically remove Cicada from this server." >&2
-    echo "       To manually remove Cicada, see https://git.io/ikev2" >&2
+    echo "       To manually remove Cicada, see https://git.io/cicada" >&2
     echo "Abort. No changes were made." >&2
     exit 1
   fi
 }
 
-confirm_remove_ikev2() {
+confirm_remove_cicada() {
   echo
   echo "WARNING: This option will remove Cicada from this VPN server, but keep the IPsec/L2TP"
   echo "         and IPsec/XAuth (\"Cisco IPsec\") modes, if installed. All Cicada configuration"
@@ -1165,9 +1165,9 @@ confirm_remove_ikev2() {
   esac
 }
 
-delete_ikev2_conf() {
-  bigecho "Deleting /etc/ipsec.d/ikev2.conf..."
-  /bin/rm -f /etc/ipsec.d/ikev2.conf
+delete_cicada_conf() {
+  bigecho "Deleting /etc/ipsec.d/cicada.conf..."
+  /bin/rm -f /etc/ipsec.d/cicada.conf
 }
 
 delete_certificates() {
@@ -1181,12 +1181,12 @@ delete_certificates() {
   certutil -D -d sql:/etc/ipsec.d -n "Cicada VPN CA" 2>/dev/null
 }
 
-print_ikev2_removed_message() {
+print_cicada_removed_message() {
   echo
   echo "Cicada removed!"
 }
 
-ikev2setup() {
+cicadasetup() {
   check_run_as_root
   check_os_type
   check_swan_install
@@ -1197,7 +1197,7 @@ ikev2setup() {
   add_client_using_defaults=0
   export_client_using_defaults=0
   list_clients=0
-  remove_ikev2=0
+  remove_cicada=0
   while [ "$#" -gt 0 ]; do
     case $1 in
       --auto)
@@ -1220,8 +1220,8 @@ ikev2setup() {
         list_clients=1
         shift
         ;;
-      --removeikev2)
-        remove_ikev2=1
+      --removecicada)
+        remove_cicada=1
         shift
         ;;
       -h|--help)
@@ -1267,17 +1267,17 @@ ikev2setup() {
     exit 0
   fi
 
-  if [ "$remove_ikev2" = "1" ]; then
+  if [ "$remove_cicada" = "1" ]; then
     check_ipsec_conf
-    confirm_remove_ikev2
-    delete_ikev2_conf
+    confirm_remove_cicada
+    delete_cicada_conf
     restart_ipsec_service
     delete_certificates
-    print_ikev2_removed_message
+    print_cicada_removed_message
     exit 0
   fi
 
-  if check_ikev2_exists; then
+  if check_cicada_exists; then
     select_menu_option
     case $selected_option in
       1)
@@ -1311,11 +1311,11 @@ ikev2setup() {
         ;;
       4)
         check_ipsec_conf
-        confirm_remove_ikev2
-        delete_ikev2_conf
+        confirm_remove_cicada
+        delete_cicada_conf
         restart_ipsec_service
         delete_certificates
-        print_ikev2_removed_message
+        print_cicada_removed_message
         exit 0
         ;;
       *)
@@ -1386,7 +1386,7 @@ ikev2setup() {
   export_p12_file
   create_mobileconfig
   create_android_profile
-  add_ikev2_connection
+  add_cicada_connection
   restart_ipsec_service
 
   if [ "$use_defaults" = "1" ]; then
@@ -1398,6 +1398,6 @@ ikev2setup() {
 }
 
 ## Defer setup until we have the complete script
-ikev2setup "$@"
+cicadasetup "$@"
 
 exit 0
