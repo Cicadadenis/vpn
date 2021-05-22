@@ -1057,7 +1057,7 @@ show_swan_update_info() {
     fi
   fi
 }
-
+clear
 print_setup_complete_message() {
   printf '\e[2K\r'
 cat <<EOF
@@ -1102,8 +1102,6 @@ EOF
 
 cat <<'EOF'
 
-Следующие шаги: настройка клиентов Cicada3301. Посмотреть:
-https://git.io/IKEv2clients
 
 ================================================
 
